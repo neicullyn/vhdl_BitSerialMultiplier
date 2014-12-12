@@ -75,12 +75,8 @@ entity  BitSerialMultiplier  is
         CLK    :  in      std_logic;                                    -- clock
         Q      :  buffer  std_logic_vector((2 * numbits - 1) downto 0); -- product
         DONE   :  out     std_logic;                                     -- calculation completed
-		  As		:	buffer		std_logic_vector((numbits ) downto 0);
-		  Bs		:	buffer		std_logic_vector((numbits ) downto 0);
-		  counter1s: buffer integer;
-		  counter2s: buffer integer;
-		  counter3s: buffer integer;
-		  Creg	:	buffer std_logic
+		  As		:	buffer		std_logic_vector((numbits - 1) downto 0);
+		  Bs		:	buffer		std_logic_vector((numbits - 1) downto 0)
     );
 
 end  BitSerialMultiplier;
@@ -95,67 +91,43 @@ architecture behavior_neicul of BitSerialMultiplier is
            Cout  :  out  std_logic       --  carry out output
        );
    end  component;
-	type state_type is (S0, S1, S2, S3);
+	type state_type is (S0,S1,S2);
 	signal state : state_type;
---	signal Creg: std_logic;
+	signal Creg: std_logic;
 	signal S: std_logic;
-	signal AnB: std_logic;
+	signal Cout: std_logic;
 --	signal As: std_logic_vector((numbits - 1) downto 0);
 --	signal Bs: std_logic_vector((numbits - 1) downto 0);
-	signal Cout: std_logic;
 begin
-	U1 : FullAdder port map(A => Q(0), B => AnB, Cin => Creg, Sum => S, Cout => Cout);
-	process (As(0),Bs(0))
-	begin
-		AnB <= As(0) and Bs(0);
-	end process;
+	U1 : FullAdder port map(A => As(0), B => Bs(0), Cin => Creg, Sum => S, Cout => Cout);
 	process (CLK, START)
-		variable counter1: integer;
-		variable counter2: integer;
-		variable counter3: integer;
+		variable counter: integer;
 	begin
 		if(START = '0') then
-			counter1 := 0;
-			counter2 := 0;
-			counter3 := 0;
+			counter := 0;
 			state <= S0;
 			DONE <= '0';
 			Q <= std_logic_vector(to_unsigned(0,Q'length));
 		elsif (CLK=  '1' and CLK'event) then
 			case state is
 				when S0 =>
-					As <= '0' & A;
-					Bs <= '0' & B;			
+					As <= A;
+					Bs <= B;			
 					Creg <= '0';
 					state <= S1;
 				when S1 =>
 					Q <= S & Q((2 * numbits - 1) downto 1);
 					Creg <= Cout;
-					As <= As(0) & As((numbits) downto 1);					
-					counter1 := counter1 +1;
-					
-					if ( counter1 >= numbits + 1 and counter2 >= numbits - 1) then
-						state <= S3;
-					elsif ( counter1 >= numbits +1 ) then
-						counter1 := 0;
+					As <= As(0) & As((numbits - 1) downto 1);				
+					Bs <= Bs(0) & Bs((numbits - 1) downto 1);		
+					counter := counter +1;
+					if ( counter >= numbits ) then
 						state <= S2;
 					end if;
 				when S2 =>
-					Q <= Q((numbits - 1) downto 0) & Q((2 * numbits - 1) downto (numbits));
-					Bs <= Bs(0) & Bs((numbits) downto 1);	
-					counter2 := counter2 +1;		
-					Creg <= '0';
-					state <= S1;
-				when S3 =>			
 					DONE <= '1';
---					state <= S4;
---				when S4 =>						
---					DONE <= '1';
 			end case;
 		end if;
-		counter1s <= counter1;
-		counter2s <= counter2;
-		counter3s <= counter3;
 	end process;
 end behavior_neicul;
 

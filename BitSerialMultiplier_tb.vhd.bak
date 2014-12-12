@@ -19,26 +19,18 @@ architecture tb_architecture of BitSerialMultiplier_tb is
         Q      :  buffer  std_logic_vector((2 * numbits - 1) downto 0); -- product
         DONE   :  out     std_logic ;                                    -- calculation completed
 		  As		:	buffer		std_logic_vector((numbits - 1) downto 0);
-		  Bs		:	buffer		std_logic_vector((numbits - 1) downto 0);
-		  counter1s: buffer integer;
-		  counter2s: buffer integer;
-		  counter3s: buffer integer;
-		  Creg	:	buffer std_logic
+		  Bs		:	buffer		std_logic_vector((numbits - 1) downto 0)
 		);			
 	end component;
 	
 	signal A	: std_logic_vector(7 downto 0);
 	signal B : std_logic_vector (7 downto 0);
-	signal As	: std_logic_vector(8 downto 0);
-	signal Bs : std_logic_vector (8 downto 0);
+	signal As	: std_logic_vector(7 downto 0);
+	signal Bs : std_logic_vector (7 downto 0);
 	signal START : std_logic;
 	signal CLK : std_logic;
 	signal Q : std_logic_vector(15 downto 0);
 	signal DONE : std_logic;
-	signal counter1: integer;
-	signal counter2: integer;
-	signal counter3: integer;
-	signal Creg:std_logic;
 begin
 	INS1: BitSerialMultiplier
 		generic map (numbits => 8)
@@ -50,38 +42,24 @@ begin
 			Q => Q,
 			DONE => DONE,
 			As => As,
-			Bs => Bs,
-			counter1s => counter1,
-			counter2s => counter2,
-			counter3s => counter3,
-			Creg => Creg
+			Bs => Bs
 		);
 	process
-		constant numbits : integer := 8;
 		variable i: integer;
-		variable j: integer;
-		variable h: integer;
 	begin
-		for i in 0 to 2**numbits-1 loop
-			for j in 0 to 2**numbits-1 loop
-				START <= '0';
-				CLK <= '0';
-				A <= std_logic_vector(to_unsigned(i,A'length));
-				B <= std_logic_vector(to_unsigned(j,B'length));
-				wait for 10 ns;
-				START <= '1';
-				wait for 10 ns;
-				
-				for h in 0 to numbits*(numbits+2) loop
-					CLK <= not CLK;
-					wait for 5 ns;
-					CLK <= not CLK;
-					wait for 5 ns;
-				end loop;
-				assert(std_match(DONE,'1')) report "Not DONE";
-				assert(std_match(Q,std_logic_vector(to_unsigned(i*j,Q'length)))) report "Q Error";
-				wait for 10ns;
-			end loop;
+		START <= '0';
+		CLK <= '0';
+		A <= "00001001";
+		B <= "00000101";
+		wait for 10 ns;
+		START <= '1';
+		wait for 10 ns;
+		
+		for i in 0 to 20 loop
+			CLK <= not CLK;
+			wait for 5 ns;
+			CLK <= not CLK;
+			wait for 5 ns;
 		end loop;
 		wait;
 	end process;
